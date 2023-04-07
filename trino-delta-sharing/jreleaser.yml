@@ -1,0 +1,15 @@
+project:
+  name: trino-delta-sharing
+  description: This is a Trino connector
+  license: Apache-2
+  java:
+    groupId: org.deltasharing
+    version: 17
+
+files:
+  artifacts:
+    - path: "target/{{projectName}}-{{projectVersion}}.zip"
+
+release:
+  github:
+    owner: rajagurunath

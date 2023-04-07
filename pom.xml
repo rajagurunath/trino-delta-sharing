@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        
+  
+  <modelVersion>4.0.0</modelVersion>
+        
+  
+  <groupId>pl.net.was</groupId>
+        
+  
+  <artifactId>trino-plugin-archetype-root</artifactId>
+        
+  
+  <version>1.13-SNAPSHOT</version>
+        
+  
+  <description>Maven Archetype for Trino Plugins</description>
+        
+  
+  <packaging>pom</packaging>
+        
+  
+  <scm>
+                
+    
+    <developerConnection>scm:git:https://github.com/nineinchnick/trino-plugin-archetype.git</developerConnection>
+                
+    
+    <tag>HEAD</tag>
+            
+  
+  </scm>
+        
+  
+  <licenses>
+                
+    
+    <license>
+                        
+      
+      <name>Apache License 2.0</name>
+                        
+      
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+                        
+      
+      <distribution>repo</distribution>
+                    
+    
+    </license>
+            
+  
+  </licenses>
+        
+  
+  <modules>
+                
+    
+    <module>archetype-builder</module>
+                
+    
+    <module>trino-example-jdbc</module>
+                
+    
+    <module>trino-example-plugin</module>
+        
+    
+    <module>trino-delta-sharing</module>
+      
+  </modules>
+        
+  
+  <properties>
+                
+    
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                
+    
+    <project.build.targetJdk>17</project.build.targetJdk>
+                
+    
+    <maven.compiler.source>17</maven.compiler.source>
+                
+    
+    <maven.compiler.target>17</maven.compiler.target>
+                
+    
+    <project.scm.id>github</project.scm.id>
+            
+  
+  </properties>
+        
+  
+  <distributionManagement>
+                
+    
+    <repository>
+                        
+      
+      <id>github</id>
+                        
+      
+      <name>GitHub nineinchnick Apache Maven Packages</name>
+                        
+      
+      <url>https://maven.pkg.github.com/nineinchnick/trino-plugin-archetype</url>
+                    
+    
+    </repository>
+            
+  
+  </distributionManagement>
+        
+  
+  <build>
+                
+    
+    <pluginManagement>
+            
+      <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+                        
+      
+      <plugins>
+                                
+        
+        <plugin>
+                                        
+          
+          <artifactId>maven-clean-plugin</artifactId>
+                                        
+          
+          <version>3.2.0</version>
+                                    
+        
+        </plugin>
+                                
+        
+        <plugin>
+                                        
+          
+          <artifactId>maven-archetype-plugin</artifactId>
+                                        
+          
+          <version>3.2.1</version>
+                                    
+        
+        </plugin>
+                                
+        
+        <plugin>
+                                        
+          
+          <artifactId>maven-resources-plugin</artifactId>
+                                        
+          
+          <version>3.3.0</version>
+                                    
+        
+        </plugin>
+                                
+        
+        <plugin>
+                                        
+          
+          <artifactId>maven-install-plugin</artifactId>
+                                        
+          
+          <version>3.0.1</version>
+                                    
+        
+        </plugin>
+                                
+        
+        <plugin>
+                                        
+          
+          <artifactId>maven-deploy-plugin</artifactId>
+                                        
+          
+          <version>3.1.0</version>
+                                    
+        
+        </plugin>
+                            
+      
+      </plugins>
+                    
+    
+    </pluginManagement>
+            
+  
+  </build>
+    
+
+</project>
