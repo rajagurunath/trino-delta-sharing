@@ -13,7 +13,6 @@
  */
 
 package org.deltasharing;
-
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
 import io.trino.spi.connector.ConnectorRecordSetProvider;
@@ -71,8 +70,9 @@ public class DeltaSharingRecordSetProvider
                     throw new IllegalStateException("Unknown column: " + column.getName());
                 })
                 .collect(toList());
-
-        Iterable<List<?>> rows = getRows();
+        String SchemaName = tableMetadata.getTable().getSchemaName();
+        String TableName = tableMetadata.getTable().getTableName();
+        Iterable<List<?>> rows = getRows(SchemaName,TableName);
         Iterable<List<?>> mappedRows = StreamSupport.stream(rows.spliterator(), false)
                 .map(row -> columnIndexes.stream()
                         .map(row::get)
@@ -84,9 +84,12 @@ public class DeltaSharingRecordSetProvider
         return new InMemoryRecordSet(mappedTypes, mappedRows);
     }
 
-    private Iterable<List<?>> getRows()
+    private Iterable<List<?>> getRows(String SchemaName,String TableName)
     {
+        DeltaSharingClientV1 deltaSharingClientV1 = metadata.getDeltaSharingClient();
+        List<String> parquetFileUrls = deltaSharingClientV1.getTableData("delta_share1",SchemaName,TableName,List.of(""),"2","0");
         // TODO replace the list with an iterable that provides the data read from the data source for this connector
+        System.out.println(parquetFileUrls);
         return List.of(
                 List.of("x", defaultType, "my-name"));
     }

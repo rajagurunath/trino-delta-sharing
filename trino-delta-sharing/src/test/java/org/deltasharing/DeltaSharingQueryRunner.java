@@ -35,7 +35,7 @@ public class DeltaSharingQueryRunner
             throws Exception
     {
         Session defaultSession = testSessionBuilder()
-                .setCatalog("example")
+                .setCatalog("delta_share1")
                 .setSchema("default")
                 .build();
 
@@ -49,7 +49,7 @@ public class DeltaSharingQueryRunner
         queryRunner.installPlugin(new DeltaSharingPlugin());
 
         queryRunner.createCatalog(
-                "example",
+                "delta_share1",
                 "deltasharing",
                 Map.of());
 

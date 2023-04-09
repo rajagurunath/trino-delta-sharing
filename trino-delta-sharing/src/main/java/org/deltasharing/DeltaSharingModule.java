@@ -46,6 +46,7 @@ public class DeltaSharingModule
         binder.bind(DeltaSharingConnector.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingMetadata.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingClient.class).in(Scopes.SINGLETON);
+        binder.bind(DeltaSharingClientV1.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingSplitManager.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingRecordSetProvider.class).in(Scopes.SINGLETON);
         configBinder(binder).bindConfig(DeltaSharingConfig.class);

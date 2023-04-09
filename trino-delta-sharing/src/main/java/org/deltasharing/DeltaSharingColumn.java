@@ -37,7 +37,7 @@ public final class DeltaSharingColumn
     @JsonProperty
     public Type getType()
     {
-        return VarcharType.VARCHAR;
+        return DeltaTrinoColumn.convert(this.type);
     }
 
     @Override
