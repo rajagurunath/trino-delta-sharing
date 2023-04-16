@@ -32,8 +32,8 @@ public class DeltaSharingClientV1 {
     private static final String providerJSON = """
             {
               "shareCredentialsVersion": 1,
-              "endpoint": "http://localhost:8000/delta-sharing/",
-              "bearerToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MTU4Nzc3OH0.84FhExRV2xgWiaYGbUsFfRiRXAaxhCzXhLz4JHy21tw",
+              "endpoint": "http://localhost:8001/delta-sharing/",
+              "bearerToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MjI0Mzg4Nn0.UfCtv4K4QUTCSLS_mSmFbhnZuNpEPXANbZHM6PJmm8M",
               "expirationTime": "2023-04-15T09:36:29Z"
             }
             """;
@@ -195,13 +195,12 @@ public class DeltaSharingClientV1 {
         return null;
     }
 
-    public List<String> getTableData(String share, String schema, String table, List<String> predicates, String limitHint, String version) {
+    public List<DeltaFile> getTableData(String share, String schema, String table, List<String> predicates, String limitHint, String version) {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
         String tableVersion = getTableVersion(share, schema, table);
         DeltaSharingQueryRequest deltaSharingQueryRequest = new DeltaSharingQueryRequest(predicates, limitHint, version);
         Call<ResponseBody> queryCallSync = deltaSharingService.getTableData(tableVersion, share,schema,table,deltaSharingQueryRequest);
-        ArrayList<String> parquetFileUrs = new ArrayList<String>();
-
+        ArrayList<DeltaFile> parquetFileUrs = new ArrayList<DeltaFile>();
         System.out.println("Starting");
         try {
 
@@ -210,27 +209,30 @@ public class DeltaSharingClientV1 {
             assert apiResponse != null;
             Gson gson = new Gson();
 
-            try (InputStream inputStream = response.body().byteStream();
-                 Reader reader = new InputStreamReader(inputStream)) {
-                BufferedReader bufferedReader = new BufferedReader(reader);
-                String line1 = bufferedReader.readLine();
-                Protocol protocol1 = gson.fromJson(line1, Protocol.class);
-                System.out.println(protocol1.minReaderVersion);
-                System.out.println("after header");
-                String line2 = bufferedReader.readLine();
-                DeltaSharingMetadataModel metadata1 = gson.fromJson(line2, DeltaSharingMetadataModel.class);
-                System.out.println(metadata1.metaData);
-                System.out.println(metadata1.metaData.schemaString);
+            try {
+                assert response.body() != null;
+                try (InputStream inputStream = response.body().byteStream();
+                     Reader reader = new InputStreamReader(inputStream)) {
+                    BufferedReader bufferedReader = new BufferedReader(reader);
+                    String line1 = bufferedReader.readLine();
+                    Protocol protocol1 = gson.fromJson(line1, Protocol.class);
+                    System.out.println(protocol1.minReaderVersion);
+                    System.out.println("after header");
+                    String line2 = bufferedReader.readLine();
+                    DeltaSharingMetadataModel metadata1 = gson.fromJson(line2, DeltaSharingMetadataModel.class);
+                    System.out.println(metadata1.metaData);
+                    System.out.println(metadata1.metaData.schemaString);
 
-                String line;
-                System.out.println("table files");
-                while ((line = bufferedReader.readLine()) != null) {
-                    DeltaSharingQuery deltaFileResponse = gson.fromJson(line, DeltaSharingQuery.class);
-                    System.out.println(deltaFileResponse.file.url);
-                    parquetFileUrs.add(deltaFileResponse.file.url);
-                    // Process the ApiResponse object
+                    String line;
+                    System.out.println("table files");
+                    while ((line = bufferedReader.readLine()) != null) {
+                        DeltaSharingQuery deltaFileResponse = gson.fromJson(line, DeltaSharingQuery.class);
+                        System.out.println(deltaFileResponse.file.url);
+                        parquetFileUrs.add(deltaFileResponse.file);
+                        // Process the ApiResponse object
+                    }
+
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -251,9 +253,9 @@ public class DeltaSharingClientV1 {
             System.out.println(client.getSchemas());
             System.out.println(client.getTables("delta_share1","delta_schema1"));
             System.out.println(client.getAllTables("delta_share1"));
-            System.out.println(client.getTableVersion("delta_share1","delta_schema1","test_hm"));
-            System.out.println(client.getTableMetadata("delta_share1","delta_schema1","test_hm"));
-            System.out.println(client.getTableData("delta_share1","delta_schema1","test_hm",List.of(""),"2","0"));
+            System.out.println(client.getTableVersion("delta_share1","delta_schema1","test_student"));
+            System.out.println(client.getTableMetadata("delta_share1","delta_schema1","test_student"));
+            System.out.println(client.getTableData("delta_share1","delta_schema1","test_student",List.of(""),"200","1"));
 
         }
     }

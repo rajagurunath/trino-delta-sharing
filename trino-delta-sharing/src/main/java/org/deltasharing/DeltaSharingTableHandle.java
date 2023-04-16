@@ -23,7 +23,7 @@ public class DeltaSharingTableHandle
         implements ConnectorTableHandle
 {
     private final SchemaTableName schemaTableName;
-
+    private DeltaSharingTable deltaSharingTable;
     @JsonCreator
     public DeltaSharingTableHandle(SchemaTableName schemaTableName)
     {
@@ -35,6 +35,16 @@ public class DeltaSharingTableHandle
     {
         return schemaTableName;
     }
+
+    public String getSchema()
+    {
+        return schemaTableName.getSchemaName();
+    }
+
+    public String getTable(){
+        return schemaTableName.getTableName();
+    }
+
 
     @Override
     public String toString()

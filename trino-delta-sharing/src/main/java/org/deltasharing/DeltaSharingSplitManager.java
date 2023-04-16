@@ -18,14 +18,8 @@ import com.google.common.collect.ImmutableList;
 import io.trino.spi.HostAddress;
 import io.trino.spi.Node;
 import io.trino.spi.NodeManager;
-import io.trino.spi.connector.ConnectorSession;
-import io.trino.spi.connector.ConnectorSplitManager;
-import io.trino.spi.connector.ConnectorSplitSource;
-import io.trino.spi.connector.ConnectorTableHandle;
-import io.trino.spi.connector.ConnectorTransactionHandle;
-import io.trino.spi.connector.Constraint;
-import io.trino.spi.connector.DynamicFilter;
-import io.trino.spi.connector.FixedSplitSource;
+import io.trino.spi.connector.*;
+import org.deltasharing.models.DeltaFile;
 
 import javax.inject.Inject;
 
@@ -37,6 +31,7 @@ public class DeltaSharingSplitManager
         implements ConnectorSplitManager
 {
     private final NodeManager nodeManager;
+    private DeltaSharingClientV1 deltaSharingClientV1;
 
     @Inject
     public DeltaSharingSplitManager(NodeManager nodeManager)
@@ -55,8 +50,18 @@ public class DeltaSharingSplitManager
         List<HostAddress> addresses = nodeManager.getRequiredWorkerNodes().stream()
                 .map(Node::getHostAndPort)
                 .collect(toList());
+        DeltaSharingTableHandle deltaLakeTableHandle = (DeltaSharingTableHandle) table;
+        List<DeltaFile> deltaFiles = deltaSharingClientV1.getTableData(
+                "delta_share1",
+                deltaLakeTableHandle.getSchema(),
+                deltaLakeTableHandle.getTable(),
+                List.of(""),
+                "200",
+                "1"
+                );
+        deltaFiles.stream().map(deltaFile -> new DeltaSharingSplit((DeltaSharingTableHandle) table, addresses,deltaFile));
+        return new FixedSplitSource((Iterable<? extends ConnectorSplit>)
+                deltaFiles.stream().map(deltaFile -> new DeltaSharingSplit((DeltaSharingTableHandle) table, addresses, deltaFile)).iterator());
 
-        return new FixedSplitSource(ImmutableList.of(
-                new DeltaSharingSplit((DeltaSharingTableHandle) table, addresses)));
     }
 }

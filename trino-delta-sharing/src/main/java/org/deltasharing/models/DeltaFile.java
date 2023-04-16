@@ -1,10 +1,12 @@
 package org.deltasharing.models;
 
+import java.util.Map;
+
 public class DeltaFile {
     public String url;
     public String id;
-    public PartitionValues partitionValues;
+    public Map<String,String> partitionValues;
     public int size;
-    public String stats;
+    public DeltaSharingStats stats;
 }
 

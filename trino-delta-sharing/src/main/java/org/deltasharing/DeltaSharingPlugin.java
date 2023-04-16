@@ -15,15 +15,23 @@
 package org.deltasharing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Module;
+import io.trino.plugin.hive.HiveConnectorFactory.EmptyModule;
 import io.trino.spi.Plugin;
 import io.trino.spi.connector.ConnectorFactory;
 
 public class DeltaSharingPlugin
         implements Plugin
 {
+
     @Override
     public Iterable<ConnectorFactory> getConnectorFactories()
     {
-        return ImmutableList.of(new DeltaSharingConnectorFactory());
+        return ImmutableList.of(getConnectorFactory(EmptyModule.class));
+    }
+
+    public ConnectorFactory getConnectorFactory(Class<? extends Module> module)
+    {
+        return new DeltaSharingConnectorFactory(module);
     }
 }

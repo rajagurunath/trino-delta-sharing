@@ -73,7 +73,8 @@ public class DeltaSharingMetadata
         return ImmutableList.copyOf(deltaSharingClient.getSchemas());
     }
     @Override
-    public ConnectorTableHandle getTableHandle(ConnectorSession connectorSession, SchemaTableName schemaTableName)
+    public ConnectorTableHandle getTableHandle(ConnectorSession connectorSession,
+                                               SchemaTableName schemaTableName)
     {
         System.out.println("getTableHandle: " + schemaTableName);
         if (!schemaTableName.getSchemaName().equals(schemaTableName.getSchemaName())) {

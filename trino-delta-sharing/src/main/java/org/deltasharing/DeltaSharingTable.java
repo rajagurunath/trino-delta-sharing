@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.trino.spi.connector.ColumnMetadata;
 
-import java.net.URI;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -15,6 +14,9 @@ import static java.util.Objects.requireNonNull;
 public class DeltaSharingTable
 {
     private final String name;
+
+    private final DeltaSharingClientV1 deltaSharingClient;
+
     private final List<DeltaSharingColumn> columns;
     private final List<ColumnMetadata> columnsMetadata;
     private final List<String> sources;
@@ -22,9 +24,11 @@ public class DeltaSharingTable
     @JsonCreator
     public DeltaSharingTable(
             @JsonProperty("name") String name,
+            DeltaSharingClientV1 deltaSharingClient,
             @JsonProperty("columns") List<DeltaSharingColumn> columns,
             @JsonProperty("sources") List<String> sources)
     {
+        this.deltaSharingClient = deltaSharingClient;
         checkArgument(!isNullOrEmpty(name), "name is null or is empty");
         this.name = requireNonNull(name, "name is null");
         this.columns = ImmutableList.copyOf(requireNonNull(columns, "columns is null"));

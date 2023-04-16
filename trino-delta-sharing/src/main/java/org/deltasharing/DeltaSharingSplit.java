@@ -18,8 +18,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.trino.spi.HostAddress;
 import io.trino.spi.connector.ConnectorSplit;
+import org.deltasharing.models.DeltaFile;
 
 import java.util.List;
+import java.util.Map;
 
 public class DeltaSharingSplit
         implements ConnectorSplit
@@ -27,15 +29,36 @@ public class DeltaSharingSplit
     private final DeltaSharingTableHandle tableHandle;
     private final List<HostAddress> addresses;
 
+    private final DeltaFile deltaFile;
+
     @JsonCreator
     public DeltaSharingSplit(
             @JsonProperty("tableHandle") DeltaSharingTableHandle tableHandle,
-            @JsonProperty("addresses") List<HostAddress> addresses)
+            @JsonProperty("addresses") List<HostAddress> addresses,
+            DeltaFile deltaFile)
+
     {
         this.tableHandle = tableHandle;
         this.addresses = addresses;
+        this.deltaFile = deltaFile;
     }
 
+    public DeltaFile getDeltaFile(){
+        return deltaFile;
+    }
+
+    public Map<String,String> getPredicate(){
+        return deltaFile.partitionValues;
+    }
+
+
+    public String getPath(){
+        return deltaFile.url;
+    }
+
+    public Integer getFileSize(){
+        return deltaFile.size;
+    }
     @Override
     public boolean isRemotelyAccessible()
     {

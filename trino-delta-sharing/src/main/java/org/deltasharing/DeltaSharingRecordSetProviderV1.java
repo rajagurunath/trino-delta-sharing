@@ -13,34 +13,26 @@
  */
 
 package org.deltasharing;
-import io.trino.spi.connector.ColumnHandle;
-import io.trino.spi.connector.ColumnMetadata;
-import io.trino.spi.connector.ConnectorRecordSetProvider;
-import io.trino.spi.connector.ConnectorSession;
-import io.trino.spi.connector.ConnectorSplit;
-import io.trino.spi.connector.ConnectorTableHandle;
-import io.trino.spi.connector.ConnectorTableMetadata;
-import io.trino.spi.connector.ConnectorTransactionHandle;
-import io.trino.spi.connector.InMemoryRecordSet;
-import io.trino.spi.connector.RecordSet;
+
+import io.trino.spi.connector.*;
 import io.trino.spi.type.Type;
-import org.deltasharing.models.DeltaFile;
 
 import javax.inject.Inject;
-
 import java.util.List;
 import java.util.stream.StreamSupport;
+import io.trino.parquet.reader.ParquetReader;
+import org.deltasharing.models.DeltaFile;
 
 import static java.util.stream.Collectors.toList;
 
-public class DeltaSharingRecordSetProvider
+public class DeltaSharingRecordSetProviderV1
         implements ConnectorRecordSetProvider
 {
     private final String defaultType;
     private final DeltaSharingMetadata metadata;
 
     @Inject
-    public DeltaSharingRecordSetProvider(DeltaSharingConfig config, DeltaSharingMetadata metadata)
+    public DeltaSharingRecordSetProviderV1(DeltaSharingConfig config, DeltaSharingMetadata metadata)
     {
         this.defaultType = config.getDefaultType();
         this.metadata = metadata;

@@ -14,12 +14,7 @@
 
 package org.deltasharing;
 
-import io.trino.spi.connector.Connector;
-import io.trino.spi.connector.ConnectorMetadata;
-import io.trino.spi.connector.ConnectorRecordSetProvider;
-import io.trino.spi.connector.ConnectorSession;
-import io.trino.spi.connector.ConnectorSplitManager;
-import io.trino.spi.connector.ConnectorTransactionHandle;
+import io.trino.spi.connector.*;
 import io.trino.spi.transaction.IsolationLevel;
 
 import javax.inject.Inject;
@@ -31,18 +26,22 @@ public class DeltaSharingConnector
         implements Connector
 {
     private final DeltaSharingMetadata metadata;
-    private final DeltaSharingSplitManager splitManager;
-    private final DeltaSharingRecordSetProvider recordSetProvider;
+    private final ConnectorSplitManager splitManager;
+//    private final DeltaSharingRecordSetProvider recordSetProvider;
+
+    private final ConnectorPageSourceProvider pageSourceProvider;
+
 
     @Inject
     public DeltaSharingConnector(
             DeltaSharingMetadata metadata,
-            DeltaSharingSplitManager splitManager,
-            DeltaSharingRecordSetProvider recordSetProvider)
+            ConnectorSplitManager splitManager,
+            ConnectorPageSourceProvider pageSourceProvider)
     {
         this.metadata = requireNonNull(metadata, "metadata is null");
-        this.splitManager = requireNonNull(splitManager, "splitManager is null");
-        this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
+        this.splitManager = requireNonNull((DeltaSharingSplitManager) splitManager, "splitManager is null");
+//        this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
+        this.pageSourceProvider = requireNonNull(pageSourceProvider,"pageSourceProvider is null");
     }
 
     @Override
@@ -63,9 +62,14 @@ public class DeltaSharingConnector
         return splitManager;
     }
 
-    @Override
-    public ConnectorRecordSetProvider getRecordSetProvider()
+//    @Override
+//    public ConnectorRecordSetProvider getRecordSetProvider()
+//    {
+//        return recordSetProvider;
+//    }
+    public ConnectorPageSourceProvider getConnectorPageSource()
     {
-        return recordSetProvider;
+        return pageSourceProvider;
     }
+
 }
