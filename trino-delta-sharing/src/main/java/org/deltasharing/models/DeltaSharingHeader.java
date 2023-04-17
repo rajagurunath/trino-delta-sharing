@@ -1,5 +1,0 @@
-package org.deltasharing.models;
-
-public class DeltaSharingHeader {
-    private String delta_sharing_version;
-}
