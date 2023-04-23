@@ -3,17 +3,7 @@ package io.trino.deltasharing;
 
 import com.google.inject.Inject;
 import io.trino.deltasharing.parquet.ParquetPlugin;
-import io.trino.spi.connector.ColumnHandle;
-import io.trino.spi.connector.ConnectorPageSource;
-import io.trino.spi.connector.ConnectorPageSourceProvider;
-import io.trino.spi.connector.ConnectorSession;
-import io.trino.spi.connector.ConnectorSplit;
-import io.trino.spi.connector.ConnectorTableHandle;
-import io.trino.spi.connector.ConnectorTransactionHandle;
-import io.trino.spi.connector.DynamicFilter;
-import io.trino.spi.connector.FixedPageSource;
-import io.trino.spi.connector.RecordPageSource;
-import io.trino.spi.connector.RecordSet;
+import io.trino.spi.connector.*;
 import io.trino.deltasharing.parquet.FilePlugin;
 
 import java.util.List;
@@ -44,11 +34,12 @@ public class DeltaSharingPageSourceProvider
 
 
         DeltaSharingSplit deltaSharingSplit = (DeltaSharingSplit) requireNonNull(split, "split is null");
-
+        String parquetFileDirectory = deltaSharingClientV1.getParquetFileDirectory();
         ParquetPlugin plugin = new ParquetPlugin();
         String filePath = deltaSharingSplit.getParquetURL();
-
-        return new FixedPageSource(plugin.getPagesIterator(filePath, path -> deltaSharingClientV1.getInputStream(session, path)));
+        DeltaSharingTableHandle deltaSharingTable = (DeltaSharingTableHandle) requireNonNull(table);
+        SchemaTableName schemaTableName = deltaSharingTable.getSchemaTableName();
+        return new FixedPageSource(plugin.getPagesIterator(filePath, path -> deltaSharingClientV1.getInputStream(session, path),parquetFileDirectory,schemaTableName.toString()));
 
     }
 }

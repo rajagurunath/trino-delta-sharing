@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.base.Throwables.throwIfUnchecked;
+import static io.trino.deltasharing.DeltaSharingProperties.LOCATION_PROPERTY;
 import static io.trino.plugin.base.Versions.checkSpiVersion;
 import static java.util.Objects.requireNonNull;
 
@@ -69,6 +70,9 @@ public class DeltaSharingConnectorFactory
         try {
             Class<?> moduleClass = classLoader.loadClass(Module.class.getName());
             Object moduleInstance = classLoader.loadClass(module.getName()).getConstructor().newInstance();
+            System.out.println("************************************************************");
+            String parquetFileDirectory = config.get("delta-sharing.parquetFileDirectory");
+            System.out.println(parquetFileDirectory);
             return (Connector) classLoader.loadClass(InternalDeltaSharingConnectorFactory.class.getName())
                     .getMethod("createConnector", String.class, Map.class, ConnectorContext.class, Optional.class, moduleClass)
                     .invoke(null, catalogName, config, context, Optional.empty(), moduleInstance);

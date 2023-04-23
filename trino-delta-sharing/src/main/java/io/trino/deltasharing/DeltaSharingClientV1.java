@@ -4,14 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.trino.deltasharing.models.*;
 import io.trino.deltasharing.services.DeltaSharingService;
-import io.trino.plugin.hive.HdfsEnvironment;
 import io.trino.spi.connector.ColumnMetadata;
 import io.trino.spi.connector.ConnectorSession;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
-import org.apache.hadoop.fs.Path;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -21,8 +19,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import io.trino.deltasharing.models.*;
-import io.trino.deltasharing.services.*;
+
 import io.trino.deltasharing.models.DeltaSharingSchemaResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,20 +27,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static io.trino.spi.type.VarcharType.VARCHAR;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 public class DeltaSharingClientV1 {
 
-    private static final String providerJSON = """
-            {
-              "shareCredentialsVersion": 1,
-              "endpoint": "http://localhost:8001/delta-sharing/",
-              "bearerToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MjgzNDEyNH0.37zJJpkOYEis17-TKLxUQwlCcwHeWQs6Wuz5TqTJYEk",
-              "expirationTime": "2023-04-15T09:36:29Z"
-            }
-            """;
+    private static String providerJSON = null;
+    private final String parquetFileDirectory;
     static ObjectMapper mapper = new ObjectMapper();
 
     public DeltaSharingService getDeltaSharingService() {
@@ -62,7 +53,14 @@ public class DeltaSharingClientV1 {
         return profileAdaptor;
     }
 
-    public DeltaSharingClientV1() throws JsonProcessingException {
+    public DeltaSharingClientV1(String providerJSON, String parquetFileDirectory) throws JsonProcessingException {
+        this.providerJSON = requireNonNull(providerJSON,"providerJSON should not be null");
+        this.parquetFileDirectory = requireNonNull(parquetFileDirectory);
+
+    }
+
+    public String getParquetFileDirectory(){
+        return parquetFileDirectory;
     }
 
     public static Retrofit getRetroFitClient() {
@@ -281,7 +279,7 @@ public class DeltaSharingClientV1 {
         System.out.println("getting client");
         {
 
-            DeltaSharingClientV1 client = new DeltaSharingClientV1();
+            DeltaSharingClientV1 client = new DeltaSharingClientV1(providerJSON, "");
             System.out.println(client.getSchemas());
             System.out.println(client.getTables("delta_share1","delta_schema1"));
             System.out.println(client.getAllTables("delta_share1"));

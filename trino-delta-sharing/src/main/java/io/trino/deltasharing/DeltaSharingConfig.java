@@ -23,6 +23,8 @@ import javax.validation.constraints.NotNull;
 public class DeltaSharingConfig
 {
     private String defaultType = "default-value";
+
+    private String parquetFileDirectory;
     private final URI metadata= URI.create("http://localhost:8001/delta-sharing/shares/delta_share1/");
 
     @NotNull
@@ -34,6 +36,17 @@ public class DeltaSharingConfig
     public String getDefaultType()
     {
         return defaultType;
+    }
+
+    @Config("delta-sharing.parquetFileDirectory")
+    public DeltaSharingConfig setParquetFileDirectory(String parquetFileDirectory)
+    {
+        this.parquetFileDirectory = parquetFileDirectory;
+        return this;
+    }
+
+    public String getParquetFileDirectory(){
+        return parquetFileDirectory;
     }
 
     @Config("default-type")

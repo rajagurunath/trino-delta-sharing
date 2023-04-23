@@ -15,10 +15,13 @@
 package io.trino.deltasharing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 import io.trino.plugin.hive.HiveConnectorFactory.EmptyModule;
 import io.trino.spi.Plugin;
 import io.trino.spi.connector.ConnectorFactory;
+
+import java.util.Set;
 
 public class DeltaSharingPlugin
         implements Plugin
@@ -33,5 +36,10 @@ public class DeltaSharingPlugin
     public ConnectorFactory getConnectorFactory(Class<? extends Module> module)
     {
         return new DeltaSharingConnectorFactory(module);
+    }
+
+    @Override
+    public Set<Class<?>> getFunctions() {
+        return ImmutableSet.of(DeltaSharingCleaner.class);
     }
 }

@@ -14,23 +14,17 @@
 package io.trino.deltasharing;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.airlift.bootstrap.Bootstrap;
-import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.event.client.EventModule;
 import io.airlift.json.JsonModule;
 import io.trino.plugin.base.CatalogName;
 import io.trino.plugin.base.CatalogNameModule;
-import io.trino.plugin.base.jmx.ConnectorObjectNameGeneratorModule;
 import io.trino.plugin.base.jmx.MBeanServerModule;
-import io.trino.plugin.hive.FileFormatDataSourceStats;
-import io.trino.plugin.hive.HdfsEnvironment;
 import io.trino.plugin.hive.NodeVersion;
 import io.trino.plugin.hive.authentication.HdfsAuthenticationModule;
 import io.trino.plugin.hive.azure.HiveAzureModule;
 import io.trino.plugin.hive.gcs.HiveGcsModule;
-import io.trino.plugin.hive.parquet.ParquetReaderConfig;
 import io.trino.plugin.hive.s3.HiveS3Module;
 import io.trino.spi.NodeManager;
 import io.trino.spi.PageIndexerFactory;
@@ -55,7 +49,8 @@ public final class InternalDeltaSharingConnectorFactory
             ConnectorContext context,
             Optional<Module> metastoreModule,
             Module module)
-    {
+    {   String parquetFileDirectory = config.get("delta-sharing.parquetFileDirectory");
+        String providerJSON = config.get("delta-sharing.credentials");
         ClassLoader classLoader = InternalDeltaSharingConnectorFactory.class.getClassLoader();
         try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(classLoader)) {
             Bootstrap app = new Bootstrap(
@@ -77,13 +72,13 @@ public final class InternalDeltaSharingConnectorFactory
                         newSetBinder(binder, EventListener.class);
                     },
                     module);
-            Injector injector = app
-                    .doNotInitializeLogging()
-                    .setRequiredConfigurationProperties(config)
-                    .initialize();
 
+//            Injector injector = app
+//                    .doNotInitializeLogging()
+//                    .setRequiredConfigurationProperties(config)
+//                    .initialize();
 //            System.out.println(injector.getAllBindings().toString());
-            LifeCycleManager lifeCycleManager = injector.getInstance(LifeCycleManager.class);
+//            LifeCycleManager lifeCycleManager = injector.getInstance(LifeCycleManager.class);
 //            HdfsFileSystemFactory hdfsFileSystemFactory = injector.getInstance(HdfsFileSystemFactory.class);
 //            DeltaSharingPageSourceProvider connectorPageSource = injector.getInstance(DeltaSharingPageSourceProvider.class);
 //            ConnectorPageSourceProvider connectorPageSource = injector.getInstance(ConnectorPageSourceProvider.class);
@@ -103,7 +98,7 @@ public final class InternalDeltaSharingConnectorFactory
 
 //            Set<Procedure> procedures = injector.getInstance(Key.get(new TypeLiteral<Set<Procedure>>() {}));
 //            Set<TableProcedureMetadata> tableProcedures = injector.getInstance(Key.get(new TypeLiteral<Set<TableProcedureMetadata>>() {}));
-            DeltaSharingClientV1 deltaSharingClientV1 = new DeltaSharingClientV1();
+            DeltaSharingClientV1 deltaSharingClientV1 = new DeltaSharingClientV1(providerJSON, parquetFileDirectory);
             DeltaSharingMetadata deltaSharingMetadata = new DeltaSharingMetadata(deltaSharingClientV1);
             DeltaSharingSplitManager splitManager = new DeltaSharingSplitManager(context.getNodeManager(), deltaSharingClientV1);
 //            ConnectorSplitManager splitManager = (ConnectorSplitManager)injector.getInstance(ConnectorSplitManager.class);

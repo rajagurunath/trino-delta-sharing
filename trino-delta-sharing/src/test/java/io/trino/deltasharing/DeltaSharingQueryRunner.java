@@ -47,11 +47,18 @@ public class DeltaSharingQueryRunner
                 .setNodeCount(1)
                 .build();
         queryRunner.installPlugin(new DeltaSharingPlugin());
-
+        String providerJSON = """
+            {
+              "shareCredentialsVersion": 1,
+              "endpoint": "http://localhost:8001/delta-sharing/",
+              "bearerToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MjgzNDEyNH0.37zJJpkOYEis17-TKLxUQwlCcwHeWQs6Wuz5TqTJYEk",
+              "expirationTime": "2023-04-15T09:36:29Z"
+            }
+            """;
         queryRunner.createCatalog(
                 "delta_share1",
                 "delta-sharing",
-                Map.of());
+                Map.of("delta-sharing.parquetFileDirectory","/Users/cb-it-01-1834/chargebee/research/opensource/","delta-sharing.credentials",providerJSON));
 
         return queryRunner;
     }

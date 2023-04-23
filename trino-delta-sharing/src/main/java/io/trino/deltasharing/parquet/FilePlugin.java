@@ -31,7 +31,7 @@ public interface FilePlugin
         throw new UnsupportedOperationException("A FilePlugin must implement either getRecordsIterator or getPagesIterator");
     }
 
-    default Iterable<Page> getPagesIterator(String path, Function<String, InputStream> streamProvider)
+    default Iterable<Page> getPagesIterator(String path, Function<String, InputStream> streamProvider,String parquetFileDirectory)
     {
         throw new UnsupportedOperationException("A FilePlugin must implement either getPagesIterator or getRecordsIterator");
     }
