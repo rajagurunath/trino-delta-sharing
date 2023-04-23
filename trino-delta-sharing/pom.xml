@@ -10,6 +10,7 @@
     <parent>
         <groupId>io.airlift</groupId>
         <artifactId>airbase</artifactId>
+        <relativePath></relativePath>
         <version>133</version>
     </parent>
 
@@ -34,7 +35,9 @@
         <air.check.fail-checkstyle>true</air.check.fail-checkstyle>
         <air.check.skip-checkstyle>false</air.check.skip-checkstyle>
 
-        <dep.trino.version>409</dep.trino.version>
+        <dep.trino.version>379</dep.trino.version>
+        <dep.aws-sdk.version>1.12.210</dep.aws-sdk.version>
+
         <dep.airlift.version>225</dep.airlift.version>
         <dep.errorprone.version>2.18.0</dep.errorprone.version>
         <dep.joda.version>2.12.2</dep.joda.version>
@@ -133,6 +136,25 @@
             <artifactId>validation-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-parquet</artifactId>
+            <version>379</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.trino.hadoop</groupId>
+            <artifactId>hadoop-apache</artifactId>
+            <version>3.2.0-17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-hive</artifactId>
+            <version>379</version>
+        </dependency>
+
+
         <!-- Trino SPI -->
         <dependency>
             <groupId>io.trino</groupId>
@@ -144,6 +166,7 @@
         <dependency>
             <groupId>io.airlift</groupId>
             <artifactId>slice</artifactId>
+            <version>0.42</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -167,6 +190,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>units</artifactId>
+            <version>1.8</version>
+        </dependency>
         <dependency>
             <groupId>io.trino</groupId>
             <artifactId>trino-tpch</artifactId>
@@ -194,12 +222,12 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>units</artifactId>
-            <version>1.8</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.airlift</groupId>-->
+<!--            <artifactId>units</artifactId>-->
+<!--            <version>1.8</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
     </dependencies>
 
     <build>
