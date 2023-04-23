@@ -14,6 +14,7 @@
 package io.trino.deltasharing.parquet;
 
 import io.trino.deltasharing.DeltaSharingColumn;
+import io.trino.deltasharing.models.DeltaFile;
 import io.trino.spi.Page;
 
 import java.io.InputStream;

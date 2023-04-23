@@ -22,7 +22,6 @@ import com.google.inject.Scopes;
 import io.trino.deltasharing.parquet.FileParquetDataSource;
 import io.trino.deltasharing.parquet.ParquetPlugin;
 import io.trino.deltasharing.parquet.ParquetTypeTranslator;
-import io.trino.deltasharing.parquet.StorageClient;
 import io.trino.spi.NodeManager;
 import io.trino.spi.connector.ConnectorPageSourceProvider;
 import io.trino.spi.type.Type;
@@ -61,7 +60,6 @@ public class DeltaSharingModule
         binder.bind(DeltaSharingClient.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingClientV1.class).in(Scopes.SINGLETON);
         binder.bind(DeltaSharingSplitManager.class).in(Scopes.SINGLETON);
-        binder.bind(StorageClient.class).in(Scopes.SINGLETON);
         binder.bind(ParquetPlugin.class).in(Scopes.SINGLETON);
         binder.bind(ParquetTypeTranslator.class).in(Scopes.SINGLETON);
 //        binder.bind(DeltaSharingRecordSetProvider.class).in(Scopes.SINGLETON);

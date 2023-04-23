@@ -16,25 +16,35 @@ package io.trino.deltasharing;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import io.trino.deltasharing.models.DeltaFile;
 import io.trino.spi.HostAddress;
 import io.trino.spi.connector.ConnectorSplit;
 
 import java.util.List;
+import static java.util.Objects.requireNonNull;
 
 public class DeltaSharingSplit
         implements ConnectorSplit
 {
-    private final DeltaSharingTableHandle tableHandle;
+//    private final DeltaSharingTableHandle tableHandle;
     private final List<HostAddress> addresses;
+//    private final DeltaFile deltaFile;
+    private final String fileID;
+    private final String url;
 
     @JsonCreator
     public DeltaSharingSplit(
-            @JsonProperty("tableHandle") DeltaSharingTableHandle tableHandle,
-            @JsonProperty("addresses") List<HostAddress> addresses, DeltaFile deltaFile)
+//            @JsonProperty("tableHandle") DeltaSharingTableHandle tableHandle,
+            @JsonProperty("url")  String url,
+            @JsonProperty("addresses") List<HostAddress> addresses,
+            @JsonProperty("fileID") String  fileID
+            )
     {
-        this.tableHandle = tableHandle;
+//        this.tableHandle = tableHandle;
         this.addresses = addresses;
+        this.fileID = requireNonNull(fileID,"fileID cannot be null");
+        this.url = requireNonNull(url,"url cannot be null");
     }
 
     @Override
@@ -43,9 +53,9 @@ public class DeltaSharingSplit
         return true;
     }
 
-    public String getTableName(){
-        return tableHandle.getSchemaTableName().getTableName();
-    }
+//    public String getTableName(){
+//        return tableHandle.getSchemaTableName().getTableName();
+//    }
     @Override
     @JsonProperty("addresses")
     public List<HostAddress> getAddresses()
@@ -56,12 +66,25 @@ public class DeltaSharingSplit
     @Override
     public Object getInfo()
     {
-        return "DeltaSharing split";
+        return ImmutableMap.builder()
+                .put("url", url)
+                .put("fileID",fileID)
+                .buildOrThrow();
+    }
+    @JsonProperty("fileID")
+    public String getFileID(){
+        return fileID;
     }
 
-    @JsonProperty("tableHandle")
-    public DeltaSharingTableHandle getTableHandle()
-    {
-        return tableHandle;
+    @JsonProperty("url")
+    public String getParquetURL(){
+        return url;
     }
+
+
+//    @JsonProperty("tableHandle")
+//    public DeltaSharingTableHandle getTableHandle()
+//    {
+//        return tableHandle;
+//    }
 }

@@ -3,7 +3,6 @@ package io.trino.deltasharing;
 
 import com.google.inject.Inject;
 import io.trino.deltasharing.parquet.ParquetPlugin;
-import io.trino.deltasharing.parquet.StorageClient;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ConnectorPageSource;
 import io.trino.spi.connector.ConnectorPageSourceProvider;
@@ -46,11 +45,10 @@ public class DeltaSharingPageSourceProvider
 
         DeltaSharingSplit deltaSharingSplit = (DeltaSharingSplit) requireNonNull(split, "split is null");
 
-//        String schemaName = storageSplit.getSchemaName();
-        String tableName = deltaSharingSplit.getTableName();
-        FilePlugin plugin = new ParquetPlugin();
+        ParquetPlugin plugin = new ParquetPlugin();
+        String filePath = deltaSharingSplit.getParquetURL();
 
-        return new FixedPageSource(plugin.getPagesIterator(tableName, path -> deltaSharingClientV1.getInputStream(session, path)));
+        return new FixedPageSource(plugin.getPagesIterator(filePath, path -> deltaSharingClientV1.getInputStream(session, path)));
 
     }
 }

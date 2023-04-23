@@ -30,7 +30,7 @@ import static java.util.Objects.requireNonNull;
 
 public class DeltaSharingConnectorFactory
         implements ConnectorFactory {
-    public static final String CONNECTOR_NAME = "deltasharing";
+    public static final String CONNECTOR_NAME = "delta-sharing";
     private final Class<? extends Module> module;
 
     public DeltaSharingConnectorFactory(Class<? extends Module> module) {

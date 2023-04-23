@@ -50,7 +50,7 @@ public class DeltaSharingQueryRunner
 
         queryRunner.createCatalog(
                 "delta_share1",
-                "deltasharing",
+                "delta-sharing",
                 Map.of());
 
         return queryRunner;

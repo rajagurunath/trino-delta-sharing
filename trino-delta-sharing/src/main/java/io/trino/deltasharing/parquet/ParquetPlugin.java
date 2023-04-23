@@ -15,6 +15,7 @@ package io.trino.deltasharing.parquet;
 
 import com.google.common.collect.ImmutableList;
 import io.trino.deltasharing.DeltaSharingColumn;
+import io.trino.deltasharing.models.DeltaFile;
 import io.trino.parquet.*;
 import io.trino.parquet.reader.MetadataReader;
 import io.trino.parquet.reader.ParquetReader;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.nullToEmpty;
@@ -81,46 +84,90 @@ public class ParquetPlugin
                 .collect(Collectors.toList());
     }
 
+    public String getFileName(String path){
+        final String regex = ".*\\/(.+)\\.parquet\\?.*";
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(path);
+        String fileName = null;
+        if (matcher.find()) {
+            System.out.println("Full match: " + matcher.group(0));
+
+            for (int i = 1; i <= matcher.groupCount(); i++) {
+                fileName =  matcher.group(i);
+                System.out.println("Group " + i + ": " +fileName);
+            }
+        }
+        return fileName;
+    }
+
     @Override
     public Iterable<Page> getPagesIterator(String path, Function<String, InputStream> streamProvider)
     {
+        path = getLocalPath(path, streamProvider,Optional.of(getFileName(path)));
+        ParquetReader reader = getReader(new File(path));
 
-        List<String> filePaths = List.of("https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e",
-            "https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e",
-            "https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e");
+        ImmutableList.Builder<Type> trinoTypes = ImmutableList.builder();
+        ImmutableList.Builder<Optional<Field>> internalFields = ImmutableList.builder();
+        ImmutableList.Builder<Boolean> rowIndexChannels = ImmutableList.builder();
+
+        // TODO assuming all columns are being read, populate the above lists
+        MessageType schema = getSchema(new File(path));
+        MessageColumnIO messageColumnIO = getColumnIO(schema, new MessageType(schema.getName(), schema.getFields()));
+        schema.getFields().forEach(field -> {
+            Type trinoType = fromParquetType(field);
+            trinoTypes.add(trinoType);
+            rowIndexChannels.add(false);
+            internalFields.add(constructField(trinoType, messageColumnIO.getChild(field.getName())));
+        });
+
+        ParquetPageSource pageSource = new ParquetPageSource(reader, trinoTypes.build(), rowIndexChannels.build(), internalFields.build());
         List<Page> result = new LinkedList<>();
-        for (int i=0;i<filePaths.size();i++){
-            String path1 = filePaths.get(i);
-            System.out.println("Reading file " + path1);
-            String s=Integer.toString(i);
-            path = getLocalPath(path1, streamProvider,Optional.of(s));
-            ParquetReader reader = getReader(new File(path));
-
-            ImmutableList.Builder<Type> trinoTypes = ImmutableList.builder();
-            ImmutableList.Builder<Optional<Field>> internalFields = ImmutableList.builder();
-            ImmutableList.Builder<Boolean> rowIndexChannels = ImmutableList.builder();
-
-            // TODO assuming all columns are being read, populate the above lists
-            MessageType schema = getSchema(new File(path));
-            MessageColumnIO messageColumnIO = getColumnIO(schema, new MessageType(schema.getName(), schema.getFields()));
-            schema.getFields().forEach(field -> {
-                Type trinoType = fromParquetType(field);
-                trinoTypes.add(trinoType);
-                rowIndexChannels.add(false);
-                internalFields.add(constructField(trinoType, messageColumnIO.getChild(field.getName())));
-            });
-
-            ParquetPageSource pageSource = new ParquetPageSource(reader, trinoTypes.build(), rowIndexChannels.build(), internalFields.build());
-
-            Page page;
-            while ((page = pageSource.getNextPage()) != null) {
-                result.add(page.getLoadedPage());
-            }
+        Page page;
+        while ((page = pageSource.getNextPage()) != null) {
+            result.add(page.getLoadedPage());
         }
-
-
         return result;
     }
+//    @Override
+//    public Iterable<Page> getPagesIterator(String path, Function<String, InputStream> streamProvider)
+//    {
+//
+//        List<String> filePaths = List.of("https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e",
+//            "https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e",
+//            "https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e");
+//        List<Page> result = new LinkedList<>();
+//        for (int i=0;i<filePaths.size();i++){
+//            String path1 = filePaths.get(i);
+//            System.out.println("Reading file " + path1);
+//            String s=Integer.toString(i);
+//            path = getLocalPath(path1, streamProvider,Optional.of(s));
+//            ParquetReader reader = getReader(new File(path));
+//
+//            ImmutableList.Builder<Type> trinoTypes = ImmutableList.builder();
+//            ImmutableList.Builder<Optional<Field>> internalFields = ImmutableList.builder();
+//            ImmutableList.Builder<Boolean> rowIndexChannels = ImmutableList.builder();
+//
+//            // TODO assuming all columns are being read, populate the above lists
+//            MessageType schema = getSchema(new File(path));
+//            MessageColumnIO messageColumnIO = getColumnIO(schema, new MessageType(schema.getName(), schema.getFields()));
+//            schema.getFields().forEach(field -> {
+//                Type trinoType = fromParquetType(field);
+//                trinoTypes.add(trinoType);
+//                rowIndexChannels.add(false);
+//                internalFields.add(constructField(trinoType, messageColumnIO.getChild(field.getName())));
+//            });
+//
+//            ParquetPageSource pageSource = new ParquetPageSource(reader, trinoTypes.build(), rowIndexChannels.build(), internalFields.build());
+//
+//            Page page;
+//            while ((page = pageSource.getNextPage()) != null) {
+//                result.add(page.getLoadedPage());
+//            }
+//        }
+//
+//
+//        return result;
+//    }
 
 
     private String getLocalPath(String path, Function<String, InputStream> streamProvider, Optional<String> fileName)

@@ -40,7 +40,7 @@ public class DeltaSharingClientV1 {
             {
               "shareCredentialsVersion": 1,
               "endpoint": "http://localhost:8001/delta-sharing/",
-              "bearerToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MjgzMzY0NH0.4k-ESYVWhxW8YXjHhc5p_zYX9p2vrzY3LxRSQIUMxiw",
+              "bearerToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4MjgzNDEyNH0.37zJJpkOYEis17-TKLxUQwlCcwHeWQs6Wuz5TqTJYEk",
               "expirationTime": "2023-04-15T09:36:29Z"
             }
             """;
@@ -236,7 +236,6 @@ public class DeltaSharingClientV1 {
                         DeltaSharingQuery deltaFileResponse = gson.fromJson(line, DeltaSharingQuery.class);
                         System.out.println(deltaFileResponse.file.url);
                         parquetFileUrs.add(deltaFileResponse.file);
-                        // Process the ApiResponse object
                     }
 
                 }

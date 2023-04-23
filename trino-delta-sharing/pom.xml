@@ -155,13 +155,14 @@
         </dependency>
 
 
-        <!-- Trino SPI -->
+        <!-- https://mvnrepository.com/artifact/io.trino/trino-spi -->
         <dependency>
             <groupId>io.trino</groupId>
             <artifactId>trino-spi</artifactId>
+            <version>379</version>
             <scope>provided</scope>
-            <version>${dep.trino.version}</version>
         </dependency>
+
 
         <dependency>
             <groupId>io.airlift</groupId>

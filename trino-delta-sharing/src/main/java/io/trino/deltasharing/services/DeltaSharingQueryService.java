@@ -1,5 +1,7 @@
 package io.trino.deltasharing.services;
 
+import alluxio.shaded.client.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import alluxio.shaded.client.com.fasterxml.jackson.annotation.JsonInclude;
 import io.trino.deltasharing.models.DeltaSharingQueryRequest;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -10,6 +12,8 @@ public interface DeltaSharingQueryService {
     @Streaming
     @Headers({"accept: application/json; charset=utf-8","Delta-Table-Version: {delta-version}"})
     @POST("shares/{share}/schemas/{schema}/tables/{table}/query")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     Call<ResponseBody> getTableData(
             @Header("delta-version") String deltaVersion,
             @Path("share") String share,

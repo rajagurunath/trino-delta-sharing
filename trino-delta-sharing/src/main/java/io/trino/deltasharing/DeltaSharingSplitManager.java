@@ -19,11 +19,12 @@ import io.trino.spi.HostAddress;
 import io.trino.spi.Node;
 import io.trino.spi.NodeManager;
 import io.trino.spi.connector.*;
-
+import com.google.common.collect.ImmutableList;
 import javax.inject.Inject;
 
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 public class DeltaSharingSplitManager
@@ -34,15 +35,15 @@ public class DeltaSharingSplitManager
 
     @Inject
     public DeltaSharingSplitManager(NodeManager nodeManager, DeltaSharingClientV1 deltaSharingClientV1)
-    {
+    {   this.deltaSharingClientV1 = requireNonNull(deltaSharingClientV1, "deltaShringClientV1 is null");
         this.nodeManager = nodeManager;
     }
-
-//    @Override
+    @Override
     public ConnectorSplitSource getSplits(
             ConnectorTransactionHandle transaction,
             ConnectorSession session,
             ConnectorTableHandle table,
+            SplitSchedulingStrategy splitSchedulingStrategy,
             DynamicFilter dynamicFilter,
             Constraint constraint)
     {
@@ -54,13 +55,14 @@ public class DeltaSharingSplitManager
                 "delta_share1",
                 deltaLakeTableHandle.getSchema(),
                 deltaLakeTableHandle.getTable(),
-                List.of(""),
-                "200",
-                "1"
+                null,
+                null,
+                null
                 );
-        deltaFiles.stream().map(deltaFile -> new DeltaSharingSplit((DeltaSharingTableHandle) table, addresses,deltaFile));
-        return new FixedSplitSource((Iterable<? extends ConnectorSplit>)
-                deltaFiles.stream().map(deltaFile -> new DeltaSharingSplit((DeltaSharingTableHandle) table, addresses, deltaFile)).iterator());
+        ImmutableList.Builder<DeltaSharingSplit> deltaSharingSplitBuilder = ImmutableList.builder();
+        deltaFiles.forEach(deltaFile -> deltaSharingSplitBuilder.add(new DeltaSharingSplit(deltaFile.url,addresses,deltaFile.id)));
+        return new FixedSplitSource(deltaSharingSplitBuilder.build());
+
 
     }
 }
