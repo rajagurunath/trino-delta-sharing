@@ -52,12 +52,11 @@ public class DeltaSharingSplitManager
                 .collect(toList());
         DeltaSharingTableHandle deltaLakeTableHandle = (DeltaSharingTableHandle) table;
         List<DeltaFile> deltaFiles = deltaSharingClientV1.getTableData(
-                "delta_share1",
                 deltaLakeTableHandle.getSchema(),
                 deltaLakeTableHandle.getTable(),
                 null,
-                null,
-                null
+                "",
+                ""
                 );
         ImmutableList.Builder<DeltaSharingSplit> deltaSharingSplitBuilder = ImmutableList.builder();
         deltaFiles.forEach(deltaFile -> deltaSharingSplitBuilder.add(new DeltaSharingSplit(deltaFile.url,addresses,deltaFile.id)));

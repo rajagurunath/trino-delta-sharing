@@ -20,6 +20,7 @@ import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.type.Type;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class DeltaSharingColumnHandle
         implements ColumnHandle
@@ -27,11 +28,17 @@ public class DeltaSharingColumnHandle
     private final String name;
     private final Type type;
 
+    private Optional<String>  Comment = Optional.of("");
+
+    private final boolean nullable;
+
     @JsonCreator
-    public DeltaSharingColumnHandle(String name, Type type)
+    public DeltaSharingColumnHandle(String name, Type type,boolean nullable,Optional<String>  Comment)
     {
         this.name = name;
         this.type = type;
+        this.nullable = nullable;
+        this.Comment = Comment;
     }
 
     @JsonProperty
@@ -45,6 +52,14 @@ public class DeltaSharingColumnHandle
     {
         return type;
     }
+
+
+    @JsonProperty
+    public Optional<String> getComment() {return Comment;}
+
+
+    @JsonProperty
+    public boolean isNullable() { return nullable;}
 
     @Override
     public boolean equals(Object o)

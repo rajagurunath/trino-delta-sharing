@@ -27,7 +27,6 @@ import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.connector.SchemaTablePrefix;
 import io.trino.spi.connector.TableColumnsMetadata;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,7 +88,7 @@ public class DeltaSharingMetadata
         DeltaSharingTableHandle tableHandle = (DeltaSharingTableHandle) connectorTableHandle;
         SchemaTableName schemaTableName = tableHandle.getSchemaTableName();
         System.out.println("SchemaTableName: " + schemaTableName);
-        List<ColumnMetadata> columnMetadataList = deltaSharingClient.getTableMetadata("delta_share1",schemaTableName.getSchemaName(),schemaTableName.getTableName());
+        List<ColumnMetadata> columnMetadataList = deltaSharingClient.getTableMetadata(schemaTableName.getSchemaName(),schemaTableName.getTableName());
         return new ConnectorTableMetadata(
                 schemaTableName,
                 columnMetadataList);
@@ -99,7 +98,7 @@ public class DeltaSharingMetadata
     public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaName)
     {
         String schemaName1 = schemaName.orElse("delta_schema1");
-        List<String> tableList = deltaSharingClient.getTables("delta_share1",schemaName1);
+        List<String> tableList = deltaSharingClient.getTables(schemaName1);
         return tableList.stream().map(table-> new SchemaTableName(schemaName1,table)).collect(toList());
     }
 
@@ -109,7 +108,9 @@ public class DeltaSharingMetadata
             ConnectorTableHandle connectorTableHandle)
     {
         return getTableMetadata(connectorSession, connectorTableHandle).getColumns().stream()
-                .collect(toMap(ColumnMetadata::getName, column -> new DeltaSharingColumnHandle(column.getName(), column.getType())));
+                .collect(toMap(ColumnMetadata::getName, column -> new DeltaSharingColumnHandle(column.getName(),
+                        column.getType(),column.isNullable(),
+                        Optional.ofNullable(column.getComment()))));
     }
 
     @Override
@@ -119,7 +120,13 @@ public class DeltaSharingMetadata
             ColumnHandle columnHandle)
     {
         DeltaSharingColumnHandle handle = (DeltaSharingColumnHandle) columnHandle;
-        return new ColumnMetadata(handle.getName(), handle.getType());
+        return ColumnMetadata.builder()
+                .setName(handle.getName())
+                .setType(handle.getType())
+                .setNullable(handle.isNullable())
+                .setComment(handle.getComment())
+                .build();
+//        return new ColumnMetadata(handle.getName(), handle.getType());
     }
 
     @Override
@@ -139,7 +146,7 @@ public class DeltaSharingMetadata
 
         return listTables(session,prefix.getSchema()).stream()
                 .map(entry-> TableColumnsMetadata.forTable(
-                        entry,deltaSharingClient.getTableMetadata("delta_share1",
+                        entry,deltaSharingClient.getTableMetadata(
                                 entry.getSchemaName(),entry.getTableName())));
     }
 }

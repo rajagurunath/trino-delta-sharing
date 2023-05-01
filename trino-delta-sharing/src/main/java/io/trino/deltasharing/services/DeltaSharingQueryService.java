@@ -18,6 +18,6 @@ public interface DeltaSharingQueryService {
             @Header("delta-version") String deltaVersion,
             @Path("share") String share,
             @Path("schema") String schema,
-            @Path("table") String table,
-            @Body DeltaSharingQueryRequest deltaSharingQueryRequest);
+            @Path("table") String table);
+//            @Body DeltaSharingQueryRequest deltaSharingQueryRequest);
 }

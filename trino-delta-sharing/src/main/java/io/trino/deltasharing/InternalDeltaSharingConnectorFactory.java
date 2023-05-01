@@ -50,6 +50,7 @@ public final class InternalDeltaSharingConnectorFactory
             Optional<Module> metastoreModule,
             Module module)
     {   String parquetFileDirectory = config.get("delta-sharing.parquetFileDirectory");
+        String shareCatalog = config.get("delta-sharing.share.catalog");
         String providerJSON = config.get("delta-sharing.credentials");
         ClassLoader classLoader = InternalDeltaSharingConnectorFactory.class.getClassLoader();
         try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(classLoader)) {
@@ -98,7 +99,7 @@ public final class InternalDeltaSharingConnectorFactory
 
 //            Set<Procedure> procedures = injector.getInstance(Key.get(new TypeLiteral<Set<Procedure>>() {}));
 //            Set<TableProcedureMetadata> tableProcedures = injector.getInstance(Key.get(new TypeLiteral<Set<TableProcedureMetadata>>() {}));
-            DeltaSharingClientV1 deltaSharingClientV1 = new DeltaSharingClientV1(providerJSON, parquetFileDirectory);
+            DeltaSharingClientV1 deltaSharingClientV1 = new DeltaSharingClientV1(providerJSON, parquetFileDirectory,shareCatalog);
             DeltaSharingMetadata deltaSharingMetadata = new DeltaSharingMetadata(deltaSharingClientV1);
             DeltaSharingSplitManager splitManager = new DeltaSharingSplitManager(context.getNodeManager(), deltaSharingClientV1);
 //            ConnectorSplitManager splitManager = (ConnectorSplitManager)injector.getInstance(ConnectorSplitManager.class);

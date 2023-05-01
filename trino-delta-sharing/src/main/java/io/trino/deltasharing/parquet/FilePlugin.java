@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 public interface FilePlugin
 {
-    List<DeltaSharingColumn> getFields(String path, Function<String, InputStream> streamProvider);
+    List<DeltaSharingColumn> getFields(String path, String parquetFileDirectory, Function<String, InputStream> streamProvider,String prefix);
 
     default Stream<List<?>> getRecordsIterator(String path, Function<String, InputStream> streamProvider)
     {

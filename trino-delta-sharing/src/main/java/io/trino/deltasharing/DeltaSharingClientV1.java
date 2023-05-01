@@ -3,9 +3,9 @@ package io.trino.deltasharing;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.trino.deltasharing.models.*;
+import io.trino.deltasharing.parquet.ParquetPlugin;
 import io.trino.deltasharing.services.DeltaSharingService;
 import io.trino.spi.connector.ColumnMetadata;
-import io.trino.spi.connector.ConnectorSession;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -17,6 +17,7 @@ import retrofit2.Retrofit;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class DeltaSharingClientV1 {
 
     private static String providerJSON = null;
     private final String parquetFileDirectory;
+    private final String shareCatalog;
     static ObjectMapper mapper = new ObjectMapper();
 
     public DeltaSharingService getDeltaSharingService() {
@@ -53,9 +55,10 @@ public class DeltaSharingClientV1 {
         return profileAdaptor;
     }
 
-    public DeltaSharingClientV1(String providerJSON, String parquetFileDirectory) throws JsonProcessingException {
+    public DeltaSharingClientV1(String providerJSON, String parquetFileDirectory, String shareCatalog) throws JsonProcessingException {
         this.providerJSON = requireNonNull(providerJSON,"providerJSON should not be null");
         this.parquetFileDirectory = requireNonNull(parquetFileDirectory);
+        this.shareCatalog = requireNonNull(shareCatalog,"shareCatalog should not be null");
 
     }
 
@@ -65,7 +68,7 @@ public class DeltaSharingClientV1 {
 
     public static Retrofit getRetroFitClient() {
         MetaData.DeltaSharingProfileAdaptor profileAdaptor = getProfileAdaptor();
-        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+        OkHttpClient client = new OkHttpClient.Builder().callTimeout(Duration.ofMinutes(5)).addInterceptor(new Interceptor() {
             @Override
             public okhttp3.Response intercept(Chain chain) throws IOException {
                 Request newRequest = chain.request().newBuilder()
@@ -88,15 +91,20 @@ public class DeltaSharingClientV1 {
 
     public List<String> getSchemas() {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        Call<DeltaSharingSchemaResponse> callSync = deltaSharingService.getSchemas("delta_share1");
+        Call<DeltaSharingSchemaResponse> callSync = deltaSharingService.getSchemas(shareCatalog);
         System.out.println("Starting");
         try {
             Response<DeltaSharingSchemaResponse> response = callSync.execute();
             DeltaSharingSchemaResponse apiResponse = response.body();
-            assert apiResponse != null;
-            List<String> schemaList = apiResponse.getSchemas();
-            System.out.println(schemaList);
-            return schemaList;
+            if (response.isSuccessful()){
+                List<String> schemaList = apiResponse.getSchemas();
+                System.out.println(schemaList);
+                return schemaList;
+            }
+            else{
+                System.out.println("Failed to get schema: " + response.code() +":" +response.errorBody().string());
+            }
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -104,9 +112,9 @@ public class DeltaSharingClientV1 {
     }
 
 
-    public List<String> getTables(String share, String schema) {
+    public List<String> getTables(String schema) {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        Call<DeltaSharingTableResponse> callSync = deltaSharingService.getTables(share, schema);
+        Call<DeltaSharingTableResponse> callSync = deltaSharingService.getTables(shareCatalog, schema);
         try {
             Response<DeltaSharingTableResponse> response = callSync.execute();
             DeltaSharingTableResponse apiResponse = response.body();
@@ -120,9 +128,9 @@ public class DeltaSharingClientV1 {
         return null;
     }
 
-    public List<String> getAllTables(String share) {
+    public List<String> getAllTables() {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        Call<DeltaSharingTableResponse> callSync = deltaSharingService.getAllTables(share);
+        Call<DeltaSharingTableResponse> callSync = deltaSharingService.getAllTables(shareCatalog);
         try {
             Response<DeltaSharingTableResponse> response = callSync.execute();
             DeltaSharingTableResponse apiResponse = response.body();
@@ -136,9 +144,9 @@ public class DeltaSharingClientV1 {
         return null;
     }
 
-    public String getTableVersion(String share, String schema, String table) {
+    public String getTableVersion(String schema, String table) {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        Call<Void> headerCallSync = deltaSharingService.getTableVersion(share, schema, table);
+        Call<Void> headerCallSync = deltaSharingService.getTableVersion(shareCatalog, schema, table);
         String tableVersion = "";
         System.out.println("header Starting");
         try {
@@ -157,14 +165,68 @@ public class DeltaSharingClientV1 {
 
         return tableVersion;
     }
+// TODO: Temperory work around instead of using metadata from Delta-sharing metadata api,
+//  we are using metadata from parquet files itself .
 
-    public  List<ColumnMetadata> getTableMetadata(String share, String schema, String table) {
+//    public  List<ColumnMetadata> getTableMetadata(String schema, String table) {
+//        DeltaSharingService deltaSharingService = getDeltaSharingService();
+//        String tableVersion = getTableVersion(schema, table);
+//        Call<ResponseBody> metadataCallSync = deltaSharingService.getTableMetadata(tableVersion, shareCatalog, schema, table);
+//        System.out.println("Starting");
+//        try {
+//            Response<ResponseBody> response = metadataCallSync.execute();
+//            ResponseBody apiResponse = response.body();
+//            assert apiResponse != null;
+//            Gson gson = new Gson();
+//            try {
+//                assert response.body() != null;
+//                try (InputStream inputStream = response.body().byteStream();
+//                     Reader reader = new InputStreamReader(inputStream)) {
+//                    BufferedReader bufferedReader = new BufferedReader(reader);
+//                    String line1 = bufferedReader.readLine();
+//                    Protocol protocol1 = gson.fromJson(line1, Protocol.class);
+//                    System.out.println(protocol1.minReaderVersion);
+//
+//                    System.out.println("after header");
+//                    String line2 = bufferedReader.readLine();
+//
+//                    DeltaSharingMetadataModel metadata1 = gson.fromJson(line2, DeltaSharingMetadataModel.class);
+//                    System.out.println(metadata1.metaData);
+//                    System.out.println(metadata1.metaData.schemaString);
+//                    DeltaTableSchema deltaTableSchema = gson.fromJson(metadata1.metaData.schemaString, DeltaTableSchema.class);
+////                    new ColumnMetadata(field.name,  DeltaTrinoColumn.convert(field.type))
+//                    return deltaTableSchema.fields.stream().map(
+//                            field -> ColumnMetadata.builder()
+//                                    .setName(field.name)
+//                                    .setType(DeltaTrinoColumn.convert(field.type))
+//                                    .setNullable(field.nullable)
+//                                    .build())
+//                            .collect(toList());
+//
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+////            assert apiResponse != null;
+////            System.out.println(apiResponse.metaData.schemaString);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
+//
+//        return null;
+//    }
+
+    // TODO: provide column metadata from downloaded first parquet file .
+    public  List<ColumnMetadata> getTableMetadata(String schema, String table) {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        String tableVersion = getTableVersion(share, schema, table);
-        Call<ResponseBody> metadataCallSync = deltaSharingService.getTableMetadata(tableVersion, share, schema, table);
+        String tableVersion = getTableVersion(schema, table);
+//        DeltaSharingQueryRequest deltaSharingQueryRequest = new DeltaSharingQueryRequest(predicates, limitHint, version);
+        Call<ResponseBody> queryCallSync = deltaSharingService.getTableData(tableVersion, shareCatalog,schema,table);
+        ArrayList<DeltaFile> parquetFileUrs = new ArrayList<DeltaFile>();
         System.out.println("Starting");
         try {
-            Response<ResponseBody> response = metadataCallSync.execute();
+
+            Response<ResponseBody> response = queryCallSync.execute();
             ResponseBody apiResponse = response.body();
             assert apiResponse != null;
             Gson gson = new Gson();
@@ -176,16 +238,23 @@ public class DeltaSharingClientV1 {
                     String line1 = bufferedReader.readLine();
                     Protocol protocol1 = gson.fromJson(line1, Protocol.class);
                     System.out.println(protocol1.minReaderVersion);
-
                     System.out.println("after header");
                     String line2 = bufferedReader.readLine();
-
                     DeltaSharingMetadataModel metadata1 = gson.fromJson(line2, DeltaSharingMetadataModel.class);
                     System.out.println(metadata1.metaData);
                     System.out.println(metadata1.metaData.schemaString);
-                    DeltaTableSchema deltaTableSchema = gson.fromJson(metadata1.metaData.schemaString, DeltaTableSchema.class);
-                    return deltaTableSchema.fields.stream().map(
-                            field -> new ColumnMetadata(field.name, DeltaTrinoColumn.convert(field.type))).collect(toList());
+
+                    String line3 = bufferedReader.readLine();
+                    DeltaSharingQuery deltaFileResponse = gson.fromJson(line3, DeltaSharingQuery.class);
+                    ParquetPlugin plugin = new ParquetPlugin();
+                    List<DeltaSharingColumn> columns = plugin.getFields(deltaFileResponse.file.url, parquetFileDirectory, this::getInputStream,schema+"."+table);
+                    return columns.stream().map(
+                            field -> ColumnMetadata.builder()
+                                    .setName(field.getName())
+                                    .setType(field.getType())
+                                    .build())
+                            .collect(toList());
+
 
                 }
             } catch (IOException e) {
@@ -196,15 +265,14 @@ public class DeltaSharingClientV1 {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
         return null;
     }
 
-    public List<DeltaFile> getTableData(String share, String schema, String table, List<String> predicates, String limitHint, String version) {
+    public List<DeltaFile> getTableData(String schema, String table, List<String> predicates, String limitHint, String version) {
         DeltaSharingService deltaSharingService = getDeltaSharingService();
-        String tableVersion = getTableVersion(share, schema, table);
+        String tableVersion = getTableVersion(schema, table);
         DeltaSharingQueryRequest deltaSharingQueryRequest = new DeltaSharingQueryRequest(predicates, limitHint, version);
-        Call<ResponseBody> queryCallSync = deltaSharingService.getTableData(tableVersion, share,schema,table,deltaSharingQueryRequest);
+        Call<ResponseBody> queryCallSync = deltaSharingService.getTableData(tableVersion, shareCatalog,schema,table);
         ArrayList<DeltaFile> parquetFileUrs = new ArrayList<DeltaFile>();
         System.out.println("Starting");
         try {
@@ -248,7 +316,7 @@ public class DeltaSharingClientV1 {
         return parquetFileUrs;
     }
 
-    public InputStream getInputStream(ConnectorSession session, String path)
+    public InputStream getInputStream(String path)
     {
         try {
             if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -279,13 +347,13 @@ public class DeltaSharingClientV1 {
         System.out.println("getting client");
         {
 
-            DeltaSharingClientV1 client = new DeltaSharingClientV1(providerJSON, "");
+            DeltaSharingClientV1 client = new DeltaSharingClientV1(providerJSON, "","share1");
             System.out.println(client.getSchemas());
-            System.out.println(client.getTables("delta_share1","delta_schema1"));
-            System.out.println(client.getAllTables("delta_share1"));
-            System.out.println(client.getTableVersion("delta_share1","delta_schema1","test_student"));
-            System.out.println(client.getTableMetadata("delta_share1","delta_schema1","test_student"));
-            System.out.println(client.getTableData("delta_share1","delta_schema1","test_student",List.of(""),"200","1"));
+            System.out.println(client.getTables("delta_schema1"));
+            System.out.println(client.getAllTables());
+            System.out.println(client.getTableVersion("delta_schema1","test_student"));
+            System.out.println(client.getTableMetadata("delta_schema1","test_student"));
+            System.out.println(client.getTableData("delta_schema1","test_student",List.of(""),"200","1"));
 
         }
     }

@@ -2,6 +2,8 @@ package io.trino.deltasharing;
 import io.trino.spi.type.*;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.ImmutableList.toImmutableList;
@@ -27,8 +29,17 @@ public class DeltaTrinoColumn {
         }
         return type;
     }
+
+    public static String cleanSparkColumn(String columnName){
+        final String regex = "\\([^)]*\\)";
+
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(columnName);
+
+        return matcher.replaceAll("");
+    }
     public static Type convert(String sparkType) {
-        switch (sparkType) {
+        switch (cleanSparkColumn(sparkType)) {
             case "boolean":
                 return BooleanType.BOOLEAN;
             case "tinyint":
@@ -39,6 +50,7 @@ public class DeltaTrinoColumn {
             case "int":
                 return IntegerType.INTEGER;
             case "bigint":
+            case "long":
                 return BigintType.BIGINT;
             case "float":
                 return RealType.REAL;
@@ -52,7 +64,7 @@ public class DeltaTrinoColumn {
             case "text":
                 return VarcharType.VARCHAR;
             case "timestamp":
-                return TimestampType.TIMESTAMP_SECONDS;
+                return TimestampType.TIMESTAMP_NANOS;
             case "date":
                 return DateType.DATE;
 //            case "array":

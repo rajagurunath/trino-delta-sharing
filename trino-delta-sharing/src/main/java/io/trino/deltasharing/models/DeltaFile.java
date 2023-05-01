@@ -5,6 +5,7 @@ public class DeltaFile {
     public String id;
     public PartitionValues partitionValues;
     public int size;
-    public DeltaSharingStats stats;
+    // differs between Lakehouse Sharing and delta-sharing new versions (String vs DeltaSharingStats)
+    public String stats;
 }
 

@@ -22,10 +22,7 @@ import io.trino.parquet.reader.ParquetReader;
 import io.trino.plugin.hive.parquet.ParquetPageSource;
 import io.trino.spi.Page;
 import io.trino.spi.TrinoException;
-import io.trino.spi.type.ArrayType;
-import io.trino.spi.type.MapType;
-import io.trino.spi.type.RowType;
-import io.trino.spi.type.Type;
+import io.trino.spi.type.*;
 import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.FileMetaData;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
@@ -69,12 +66,10 @@ public class ParquetPlugin
         implements FilePlugin
 {
     @Override
-    public List<DeltaSharingColumn> getFields(String path, Function<String, InputStream> streamProvider)
+    public List<DeltaSharingColumn> getFields(String path, String parquetFileDirectory, Function<String, InputStream> streamProvider,String prefix)
     {
         System.out.println("getFields =================================");
-        String path1 = "https://tf-benchmarking.s3.amazonaws.com/delta_2/dwh/test_hm/part-00000-e3bd56f7-7979-4f94-9bba-44d8496597f6-c000.snappy.parquet?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA3GXK5AWRNOYRTVMP%2F20230422%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230422T195655Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEMv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH9PXF7vwZaYSYX1OppCFm4OIwkJIo35Pv0MoDhVbkUOAiAjM0Vc%2FxLV%2Fh7ABx49GZ437aXwe%2FGTOjlnijNhIWBPaiqoAwjD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAIaDDc3MDM2NTUyMzM2MiIMajq0oBf0PergXGxPKvwCS8Poj3vu16vfPlFJP2NlKFynk4NSX6K1GY5smAS6wurEAdKSyiOH1jLT0w0yi%2B3yD6LxSrXnCa%2FmAk5p5I45KmSbm5FkCypp99nv3%2Fqa5eHkSa5J3TCLqoZxmFmzJWrkJNkOFAQS9RIGC2WDIxU2Z6Xh7SvJMdY4%2FEjEQEAlyKGya4pPYPQXOkAjOZlUUipuA9CJuXoxpmmd%2B3ppzJNtnIEaWpc9YrsSoWNnh3PY6aZgbKh3dCxGDUNQoDGgYNgzuzstfRot16qCcMkX%2BZuaWtkrv%2FjxjA1UCr5%2FEisrtcz5%2FUAZfwJStgumjCn%2BZHYO6RTRkSexiyv6a%2BHho1xTYgx0elvQE2qWxjrPK6bJeyW8W3uJdQQClWLag0anqyGxxQxAaBlye3Vd1nDmquHBUgnHFCEFFpzXL0FeqqYOlMT18sN8HF6JwdEp2NdTKrN9SiXA5U8AE8RHsU2XCRazcSx9EBX%2F%2Bx8HYo6DtE0VX6ZoWvfzHOJ4mAhwYsEwmMWQogY6pwG7icvmY8q5it7AGK2UtMaAR%2FBwW5y2%2B00%2FDr6Ia62q8e7wc38JUotLe9mBrn3WkMVfdRV2f6F8D2VixIV49IR3Zle4h3pHf0VfH6KHHI%2BsYRb0oi2wJrJfVg%2Fn%2BTvh6U1qd5jAT7wObjJPyW8RkXo24kGCZjaw%2F%2FqzYmtW8A3qZZvedytbI4DHr2kJOHLBxaMLg%2BCnxSz2oby6cTx4xGifqwgr54yk3g%3D%3D&X-Amz-Signature=92e9d3894e6a84252e83303b8482d8996a66991adf1143d84d422cf9fcc0209e";
-        System.out.println(path1);
-        path = getLocalPath(path1, streamProvider,"",Optional.empty(),"");
+        path = getLocalPath(path, streamProvider,parquetFileDirectory,Optional.of(getFileName(path)),prefix);
         System.out.println(path);
         MessageType schema = getSchema(new File(path));
         return schema.getFields().stream()
@@ -172,10 +167,13 @@ public class ParquetPlugin
     public void CreateDirectoryIfNotExists(String directoryName){
         File directory = new File(directoryName);
         if (! directory.exists()){
-            directory.mkdir();
-            // If you require it to make the entire directory path including parents,
-            // use directory.mkdirs(); here instead.
+            directory.mkdirs();
         }
+    }
+
+    public boolean FileExists(String fp){
+        File filePath = new File(fp);
+        return filePath.exists();
     }
 
     private String getLocalPath(String path, Function<String, InputStream> streamProvider,String parquetFileDirectory, Optional<String> fileName,String prefix)
@@ -193,8 +191,12 @@ public class ParquetPlugin
                     filePath+=".parquet";
                 }
                 System.out.println("getLocalFile: "+filePath);
-
-                Files.copy(streamProvider.apply(path), Path.of(filePath), StandardCopyOption.REPLACE_EXISTING);
+                if (!FileExists(filePath)){
+                    // we can use StandardCopyOption.COPY_ATTRIBUTES but this also may download the
+                    // parquet file as stream and replaces attributes of local parquet
+                    // file to avoid network overhead adding this check
+                    Files.copy(streamProvider.apply(path), Path.of(filePath), StandardCopyOption.REPLACE_EXISTING);
+                }
                 return filePath;
             }
             catch (IOException e) {

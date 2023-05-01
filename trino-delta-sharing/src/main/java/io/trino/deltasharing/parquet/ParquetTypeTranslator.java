@@ -20,6 +20,7 @@ import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.PrimitiveType;
 
+
 import static io.trino.spi.StandardErrorCode.NOT_SUPPORTED;
 
 public final class ParquetTypeTranslator
